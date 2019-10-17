@@ -1,0 +1,853 @@
+#include <stdio.h>
+#include <string.h>
+using namespace std;
+
+/* CS5346	Project One
+	Author Clinton Buehring
+	A Expert System to determine a poison after asking a series of symptom
+	questions which will determine a poison and provide a recommended
+	treatment. */
+
+char conclusionList[12][10];
+char variableList[59][30];
+char clauseVariableList[170][30];
+
+int instantiatedList[16];	/* instantiated list */ 
+int statementStack[16];		/* statement stack */ 
+int clauseStack[16];		/* clause stack */ 
+
+char buff[128], variable[8], poison[20]; 
+/* Variables for each of the symptoms, to hold YES or NO when asked */
+char vomiting[4], headache[4], vertigo[4], abdominalPain[4], hearingSpeechDifficulty[4],
+	 muscleWeakness[4], irritation[4], changeInTaste[4], chestPain[4], redSkin[4],
+	 dialatedPupils[4], slowBreathing[4], drowsiness[4], confusion[4], diarrhea[4],
+	 metallicTasteInMouth[4], excessiveSaliva[4], problemsSwallowing[4],
+	 bloodInUrine[4], muscleCramps[4], hairLoss[4], convulsions[4], sweating[4],
+	 constipation[4], sleepProblems[4], lossOfAppitite[4], fatigue[4], 
+	 highBloodPressure[4], numbingExtremities[4], memoryLoss[4], anemia[4],
+	 kidneyDisfunction[4], anxiety[4], depression[4], shyness[4], lackOfCoordination[4],
+	 troubleWalking[4], visionChanges[4], burningInMouth[4], swellingOfThroat[4],
+	 throatPain[4], bloodInStool[4], pHChanges[4], respiratoryDistress[4],
+	 fever[4], cough[4], nausea[4], fluidInLungs[4], lowBloodPressure[4],
+	 inebriation[4], gastritis[4], metabolicAcidosis[4], droopingEyelids[4],
+	 slurredSpeech[4], dryMouth[4], agitation[4], restlessness[4], jawTightness[4];
+char no[4] = "NO";
+int f, i, j, k, s, sn, sp, ii = 1;
+int questionNumb = 1;	// to keep track of question
+bool tester = true;
+
+void determine_member_concl_list(void); 
+void push_on_stack(void); 
+void instantiate(void);
+void identifyPoison(void);
+void treatment(void);
+
+main(){ 
+
+	sp = 16;
+	for(i = 1; i < 170; i++){
+		strcpy(clauseVariableList[i],"");
+	}
+	for(i = 1; i < 17; i++){
+        instantiatedList[i]=0; 
+        statementStack[i]=0; 
+        clauseStack[i]=0;
+	}
+	for(i = 1; i < 59; i++){
+		strcpy(variableList[i],""); 
+	}
+	for(i = 1; i < 12; i++)
+		strcpy(conclusionList[i], "POISON");
+	
+	/* enter conclusions which are the variables in the then part, 1 at 
+        a time.  enter the conclusions in exact order starting at the 1st 
+        if-then.  after last conclusion hit return key for rest of 
+        conclusions */ 
+    printf("*** CONCLUSION LIST ***\n"); 
+	for(i = 1; i < 12; i++)
+		printf("CONCLUSION %d %s\n", i,conclusionList[i]);
+	printf("HIT RETURN TO CONTINUE"); 
+        gets(buff);
+	
+	/* enter variables which are in the if part, 1 at a time in the exact 
+        order that they occur, up to 5 variables per if statement.  do not 
+        duplicate any variable names.  any name is used only once.  if no 
+        more variables left just hit return key. */ 
+	printf("*** VARIABLE LIST *\n");
+	strcpy(variableList[1], "VOMITING");
+	strcpy(variableList[2], "HEADACHE");
+	strcpy(variableList[3], "VERTIGO");
+	strcpy(variableList[4], "ABDOMINAL PAIN");
+	strcpy(variableList[5], "HEARING/SPEECH DIFFICULTY");
+	strcpy(variableList[6], "MUSCLE WEAKNESS");
+	strcpy(variableList[7], "IRRITATION");
+	strcpy(variableList[8], "CHANGEINTASTE");
+	strcpy(variableList[9], "CHESTPAIN");
+	strcpy(variableList[10], "REDSKIN");
+	strcpy(variableList[11], "DIALATEDPUPILS");
+	strcpy(variableList[12], "SLOWBREATHING");
+	strcpy(variableList[13], "DROWSINESS");
+	strcpy(variableList[14], "CONFUSION");
+	strcpy(variableList[15], "DIARRHEA");
+	strcpy(variableList[16], "METALLICTASTEINMOUTH");
+	strcpy(variableList[17], "EXCESSIVESALIVA");
+	strcpy(variableList[18], "PROBLEMSSWALLOWING");
+	strcpy(variableList[19], "BLOODINURINE");
+	strcpy(variableList[20], "MUSCLECRAMPS");
+	strcpy(variableList[21], "HAIRLOSS");
+	strcpy(variableList[22], "CONVULSIONS");
+	strcpy(variableList[23], "SWEATING");
+	strcpy(variableList[24], "CONSTIPATION");
+	strcpy(variableList[25], "SLEEPPROBLEMS");
+	strcpy(variableList[26], "LOSSOFAPPITITE");
+	strcpy(variableList[27], "FATIGUE");
+	strcpy(variableList[28], "HIGHBLOODPRESSURE");
+	strcpy(variableList[29], "NUMBINGEXTREMITIES");
+	strcpy(variableList[30], "MEMORYLOSS");
+	strcpy(variableList[31], "ANEMIA");
+	strcpy(variableList[32], "KIDNEYDISFUNCTION");
+	strcpy(variableList[33], "ANXIETY");
+	strcpy(variableList[34], "DEPRESSION");
+	strcpy(variableList[35], "SHYNESS");
+	strcpy(variableList[36], "LACKOFCOORDINATION");
+	strcpy(variableList[37], "TROUBLEWALKING");
+	strcpy(variableList[38], "VISIONCHANGES");
+	strcpy(variableList[39], "BURNINGINMOUTH");
+	strcpy(variableList[40], "SWELLINGOFTHROAT");
+	strcpy(variableList[41], "THROATPAIN");
+	strcpy(variableList[42], "BLOODINSTOOL");
+	strcpy(variableList[43], "PHCHANGES");
+	strcpy(variableList[44], "RESPIRATORYDISTRESS");
+	strcpy(variableList[45], "FEVER");
+	strcpy(variableList[46], "COUGH");
+	strcpy(variableList[47], "NAUSEA");
+	strcpy(variableList[48], "FLUIDINLUNGS");
+	strcpy(variableList[49], "LOWBLOODPRESSURE");
+	strcpy(variableList[50], "INEBRIATION");
+	strcpy(variableList[51], "GASTRITIS");
+	strcpy(variableList[52], "METABOLICACIDOSIS");
+	strcpy(variableList[53], "DROOPINGEYELIDS");
+	strcpy(variableList[54], "SLURREDSPEECH");
+	strcpy(variableList[55], "DRYMOUTH");
+	strcpy(variableList[56], "AGITATION");
+	strcpy(variableList[57], "RESTLESSNESS");
+	strcpy(variableList[58], "JAWTIGHTNESS");
+	
+	for(i=1; i<59; i++) 
+		printf("VARIABLE %d %s\n", i, variableList[i]); 
+    printf("HIT RETURN KEY TO CONTINUE"); 
+    gets(buff);
+    
+    /* enter variables as they appear in the if clauses.  a maximum of 3 
+        variables per if statement.  if no more variables hit return key. */
+    printf("*** CLAUSE VARIABLE LIST ***\n");
+    strcpy(clauseVariableList[1], "VOMITING");
+    strcpy(clauseVariableList[2], "HEADACHE");
+    strcpy(clauseVariableList[3], "VERTIGO");
+    strcpy(clauseVariableList[4], "ABDOMINAL PAIN");
+    strcpy(clauseVariableList[5], "CHANGEINTASTE");
+    strcpy(clauseVariableList[6], "CHESTPAIN");
+    strcpy(clauseVariableList[7], "REDSKIN");
+    strcpy(clauseVariableList[8], "DIALATEDPUPILS");
+    strcpy(clauseVariableList[9], "SLOWBREATHING");
+    strcpy(clauseVariableList[16], "VOMITING");
+    strcpy(clauseVariableList[17], "HEARING/SPEECH DIFFICULTY");
+    strcpy(clauseVariableList[18], "MUSCLE WEAKNESS");
+    strcpy(clauseVariableList[19], "IRRITATION");
+    strcpy(clauseVariableList[20], "NUMBINGEXTREMITIES");
+    strcpy(clauseVariableList[21], "MEMORYLOSS");
+    strcpy(clauseVariableList[22], "ANXIETY");
+    strcpy(clauseVariableList[23], "DEPRESSION");
+    strcpy(clauseVariableList[24], "SHYNESS");
+    strcpy(clauseVariableList[25], "LACKOFCOORDINATION");
+    strcpy(clauseVariableList[26], "TROUBLEWALKING");
+    strcpy(clauseVariableList[27], "VISIONCHANGES");
+    strcpy(clauseVariableList[31], "VOMITING");
+    strcpy(clauseVariableList[32], "HEADACHE");
+    strcpy(clauseVariableList[33], "ABDOMINAL PAIN");
+    strcpy(clauseVariableList[34], "DIARRHEA");
+    strcpy(clauseVariableList[35], "HAIRLOSS");
+    strcpy(clauseVariableList[36], "NUMBINGEXTREMITIES");
+    strcpy(clauseVariableList[37], "NAUSEA");
+    strcpy(clauseVariableList[46], "VOMITING");
+    strcpy(clauseVariableList[47], "HEARING/SPEECH DIFFICULTY");
+    strcpy(clauseVariableList[48], "HEADACHE");
+    strcpy(clauseVariableList[49], "DROWSINESS");
+    strcpy(clauseVariableList[50], "IRRITATION");
+    strcpy(clauseVariableList[51], "CONSTIPATION");
+    strcpy(clauseVariableList[52], "SLEEPPROBLEMS");
+    strcpy(clauseVariableList[53], "LOSSOFAPPITITE");
+    strcpy(clauseVariableList[54], "FATIGUE");
+    strcpy(clauseVariableList[55], "HIGHBLOODPRESSURE");
+    strcpy(clauseVariableList[56], "NUMBINGEXTREMITIES");
+    strcpy(clauseVariableList[57], "MEMORYLOSS");
+    strcpy(clauseVariableList[58], "ANEMIA");
+    strcpy(clauseVariableList[59], "KIDNEYDISFUNCTION");
+    strcpy(clauseVariableList[61], "VOMITING");
+    strcpy(clauseVariableList[62], "HEADACHE");
+    strcpy(clauseVariableList[63], "VERTIGO");
+    strcpy(clauseVariableList[64], "DROWSINESS");
+    strcpy(clauseVariableList[65], "CONFUSION");
+    strcpy(clauseVariableList[66], "DIARRHEA");
+    strcpy(clauseVariableList[67], "METALLICTASTEINMOUTH");
+    strcpy(clauseVariableList[68], "EXCESSIVESALIVA");
+    strcpy(clauseVariableList[69], "PROBLEMSSWALLOWING");
+    strcpy(clauseVariableList[70], "BLOODINURINE");
+    strcpy(clauseVariableList[71], "MUSCLECRAMPS");
+    strcpy(clauseVariableList[72], "HAIRLOSS");
+    strcpy(clauseVariableList[73], "CONVULSIONS");
+    strcpy(clauseVariableList[74], "SWEATING");
+    strcpy(clauseVariableList[76], "VOMITING");
+    strcpy(clauseVariableList[77], "HEADACHE");
+    strcpy(clauseVariableList[78], "ABDOMINAL PAIN");
+    strcpy(clauseVariableList[79], "BURNINGINMOUTH");
+    strcpy(clauseVariableList[80], "SWELLINGOFTHROAT");
+    strcpy(clauseVariableList[81], "THROATPAIN");
+    strcpy(clauseVariableList[82], "BLOODINSTOOL");
+    strcpy(clauseVariableList[83], "PHCHANGES");
+    strcpy(clauseVariableList[91], "VOMITING");
+    strcpy(clauseVariableList[92], "HEARING/SPEECH DIFFICULTY");
+    strcpy(clauseVariableList[93], "MUSCLE WEAKNESS");
+    strcpy(clauseVariableList[94], "CONVULSIONS");
+    strcpy(clauseVariableList[95], "VISIONCHANGES");
+    strcpy(clauseVariableList[96], "INEBRIATION");
+    strcpy(clauseVariableList[97], "GASTRITIS");
+    strcpy(clauseVariableList[98], "METABOLICACIDOSIS");
+    strcpy(clauseVariableList[106], "VOMITING");
+    strcpy(clauseVariableList[107], "HEARING/SPEECH DIFFICULTY");
+    strcpy(clauseVariableList[108], "HEADACHE");
+    strcpy(clauseVariableList[109], "MUSCLE WEAKNESS");
+    strcpy(clauseVariableList[110], "SLOWBREATHING");
+    strcpy(clauseVariableList[111], "BLOODINURINE");
+    strcpy(clauseVariableList[112], "MUSCLECRAMPS");
+    strcpy(clauseVariableList[113], "CONVULSIONS");
+    strcpy(clauseVariableList[114], "NUMBINGEXTREMITIES");
+    strcpy(clauseVariableList[115], "AGITATION");
+    strcpy(clauseVariableList[116], "RESTLESSNESS");
+    strcpy(clauseVariableList[117], "JAWTIGHTNESS");
+    strcpy(clauseVariableList[121], "VOMITING");
+    strcpy(clauseVariableList[122], "HEADACHE");
+    strcpy(clauseVariableList[123], "VERTIGO");
+    strcpy(clauseVariableList[124], "ABDOMINAL PAIN");
+    strcpy(clauseVariableList[125], "SLOWBREATHING");
+    strcpy(clauseVariableList[126], "CONFUSION");
+    strcpy(clauseVariableList[127], "FATIGUE");
+    strcpy(clauseVariableList[136], "VOMITING");
+    strcpy(clauseVariableList[137], "HEARING/SPEECH DIFFICULTY");
+    strcpy(clauseVariableList[138], "MUSCLE WEAKNESS");
+    strcpy(clauseVariableList[139], "IRRITATION");
+    strcpy(clauseVariableList[140], "PROBLEMSSWALLOWING");
+    strcpy(clauseVariableList[141], "VISIONCHANGES");
+    strcpy(clauseVariableList[142], "DROOPINGEYELIDS");
+    strcpy(clauseVariableList[143], "SLURREDSPEECH");
+    strcpy(clauseVariableList[144], "DRYMOUTH");
+    strcpy(clauseVariableList[151], "VOMITING");
+    strcpy(clauseVariableList[152], "HEARING/SPEECH DIFFICULTY");
+    strcpy(clauseVariableList[153], "HEADACHE");
+    strcpy(clauseVariableList[154], "MUSCLE WEAKNESS");
+    strcpy(clauseVariableList[155], "CHESTPAIN");
+    strcpy(clauseVariableList[156], "RESPIRATORYDISTRESS");
+    strcpy(clauseVariableList[157], "FEVER");
+    strcpy(clauseVariableList[158], "COUGH");
+    strcpy(clauseVariableList[159], "NAUSEA");
+    strcpy(clauseVariableList[160], "SWEATING");
+    strcpy(clauseVariableList[161], "FLUIDINLUNGS");
+    strcpy(clauseVariableList[162], "LOWBLOODPRESSURE");
+    for(i=1; i<12; i++){ 
+        printf("** CLAUSE %d\n", i); 
+            for(j=1; j<15; j++){
+				k = 15 * (i-1) + j; 
+            	printf("VARIABLE %d  %s\n", j, clauseVariableList[k]); } 
+            if (i==3 || i == 6 || i == 9){
+            	printf("HIT RETURN KEY TO CONTINUE"); gets(buff); } 
+    }
+    
+    /****** Inference section ******/
+    printf("** ENTER CONCLUSION (Type: POISON) "); 	gets(variable);
+    printf("****************** POISON IDENTIFIER ******************\n");
+    printf("Please ask the patient the following questions and\n");
+    printf("  respond with either 'YES' or 'NO'\n\n");
+    /* get conclusion statement number (sn) from the conclusion list 
+           (conclusionList) */
+    /* first statement starts search */
+b520: 
+	f=1;
+	determine_member_concl_list();
+	if(sn != 0){
+		/* if sn = 0 then no conclusion of that name */ 
+		do 
+        /* push statement number (sn) and clause number=1 on goal 
+        	stack which is composed of the statement stack (statementStack) 
+        	and clause stack (clauseStack) */ 
+        {
+        	push_on_stack();
+        	do
+        	{
+        	/* calculate clause location in clause-variable list */ 
+b545:
+				i = (statementStack[sp] -1) *15 + clauseStack[sp];		// CLAUSESTACK IS BASICALLY LEVEL
+				if((tester == false) && (questionNumb == 12)){
+					i = ii + 121;		// part of the symptoms tree that's not level
+					ii = i;
+					questionNumb = 0;
+				}else if((tester == false) && (questionNumb == 15)){
+					i = ii + 46;		// similar to above
+					ii = i;
+					questionNumb = 0;
+				}else if((tester == false) && (clauseStack[sp] < 6)){		// QUESTION ANSERWED AS NO
+					i = (15 * questionNumb) + i;
+					questionNumb = (questionNumb * 2) + 1;
+					ii = i;
+				} else if(clauseStack[sp] > 1 && clauseStack[sp] < 5){  	// QUESTION = TRUE, JUST ADD one TO i
+					i = ii + 1;
+					questionNumb = questionNumb * 2;
+					ii = i;
+				} else if(clauseStack[sp] >= 5){		// EVERYTHING SHOULD BE TRUE FROM HERE ON
+					i = ii + 1;
+					ii = i;
+				}
+
+				tester = true;
+		
+				/* clause variable */ 
+				if(statementStack[sp] < 2)
+          			strcpy(variable, clauseVariableList[i]); 	// variable = clauseVariableList[i]
+
+        		if(strcmp(variable, "") != 0){
+        		/*is this clause variable a conclusion? */ 
+            		f = 1; 
+            	determine_member_concl_list(); 
+            	if(sn != 0) 
+                /* it is a conclusion push it */ 
+                	goto b520; 
+                /* check instantiation of this clause */ 
+            	instantiate(); 
+            	clauseStack[sp] = clauseStack[sp] + 1; 
+				}
+			} while(strcmp(variable, "") != 0); 	/*do-while*/
+			/*no more clauses check if part of statement */ 
+            sn = statementStack[sp]; 
+            s = 0; 
+			identifyPoison();
+            
+			if(s != 1){
+				/* failed..search rest of statements for 
+                    same conclusion */ 
+                /* get conclusion */ 
+                i = statementStack[sp];
+                strcpy(variable, conclusionList[i]); 
+                /* search for conclusion starting at the 
+                    next statement number */ 
+                f = statementStack[sp] + 1; 
+                determine_member_concl_list(); 
+                strcpy(variable, "");	// MAKE VARIABLE EMPTY AGAIN
+                sp = sp+1; 
+			}
+			/* pop old conclusion and put on new one */
+		} while((s != 1) && (sn != 0)); 	/* outer do-while loop */
+		if(sn != 0){
+			/* if part true invoke then part */ 
+            /* then part of if-then statements from the 
+                position knowledge base */
+			treatment(); 
+            /* pop the stack */ 
+            sp=sp+1; 
+            if(sp >= 11) 
+                /* finished */ 
+                printf("*** SUCCESS\n"); 
+            else { 
+                /* stack is not empty */ 
+                /* get next clause then continue */ 
+                clauseStack[sp] = clauseStack[sp]+1; 
+                goto b545; 
+            }
+		}
+	}
+}
+
+
+void determine_member_concl_list() { 
+/* routine to determine if a variable (variable) is a member of the 
+   conclusion list (conclusionList).  if yes return sn != 0. 
+   if not a member sn=0; 
+*/ 
+    /* initially set to not a member */ 
+    sn = 0; 
+    /* member of conclusion list to be searched is f */ 
+    i = f; 
+    while((strcmp(variable, conclusionList[i]) != 0) && (i<12)) // not equal, so just increment
+        /* test for membership */ 
+        i=i+1; 
+    if (strcmp(variable, conclusionList[i]) == 0) sn = i;  /* a member */ 
+} 
+
+void push_on_stack(){
+/* routine to push statement number (sn) and a clause number of 1 onto the 
+conclusion stack which consists of the statement stack (statementStack) and the 
+clause stack (clauseStack)..to push decrement stack pointer (sp) */ 
+	{ 
+        sp=sp-1; 
+        statementStack[sp] = sn; 
+        clauseStack[sp] = 1; 
+	} 
+}
+
+void instantiate() {
+/* routine to instantiate a variable (variable) if it isn't already.  the 
+instantiate indication (instantiatedList) is a 0 if not, a 1 if it is.  the 
+variable list (variableList) contains the variable (variable). */ 
+	{ 
+        i=1;
+        
+        /* find variable in the list */ 
+        while((strcmp(variable, variableList[i]) != 0) && (i<59)) 
+			i=i+1; 
+        if((strcmp(variable, variableList[i]) == 0) && (instantiatedList[i] != 1)) 
+                /*found variable and not already instantiated */ 
+        {
+            instantiatedList[i]=1; /*mark instantiated */ 
+            /* the designer of the 
+            knowledge base places the input statements to 
+            instantiate the variables below in the case statement */ 
+            switch (i) 
+            { 
+            /***** input statement *****/ 
+            /* input statements for sample position knowledge 
+                base */ 
+            /***** comment 1700 ******/ 
+            case 1: printf("IS THE PATIENT VOMITING, YES OR NO? "); 
+                	gets(vomiting); 
+                	if(strcmp(vomiting, no) == 0){
+                    	printf("Vomiting == No\n");
+                        tester = false;
+                    }	
+                	break; 
+            case 2: printf("DOES THE PATIENT HAVE A HEADACHE, YES OR NO? "); 
+                	gets(headache);  
+                    if(strcmp(headache, no) == 0){
+                        printf("headache == No\n");
+                        tester = false;
+                    }	
+                    break; 
+            case 3: printf("DOES THE PATIENT HAVE VERTIGO, YES OR NO? "); 
+                    gets(vertigo);  
+                    if(strcmp(vertigo, no) == 0){
+                        printf("vertigo == No\n");
+                        tester = false;
+                    }
+                    break; 
+            case 4: printf("DOES THE PATIENT HAVE ABDOMINAL PAIN, YES OR NO? "); 
+                    gets(abdominalPain);  
+                    if(strcmp(abdominalPain, no) == 0){
+                        printf("abdominalPain == No\n");
+                        tester = false;
+                    }
+                    break; 
+            case 5: printf("DOES THE PATIENT HAVE HEARING/SPEECH DIFFICULTY, YES OR NO? "); 
+                    gets(hearingSpeechDifficulty);  
+                    if(strcmp(hearingSpeechDifficulty, no) == 0){
+                        printf("hearingSpeechDiff == No\n");
+                        tester = false;
+                    }
+                    break; 
+            case 6: printf("DOES THE PATIENT HAVE MUSCLE WEAKNESS, YES OR NO? "); 
+                    gets(muscleWeakness);  
+                    if(strcmp(muscleWeakness, no) == 0){
+                        printf("muscleWeakness == No\n");
+                        tester = false;
+                    }
+                    break; 
+            case 7: printf("DOES THE PATIENT HAVE IRRITATION, YES OR NO? "); 
+                    gets(irritation);  
+                    if(strcmp(irritation, no) == 0){
+                        printf("irritation == No\n");
+                    	tester = false;
+                    }
+                    break; 
+            case 8: printf("DOES THE PATIENT HAVE CHANGE IN TASTE, YES OR NO? "); 
+                    gets(changeInTaste);
+                    break;  
+            case 9: printf("DOES THE PATIENT HAVE CHEST PAIN, YES OR NO? "); 
+                    gets(chestPain);
+                    break;  
+            case 10: printf("DOES THE PATIENT HAVE RED SKIN, YES OR NO? "); 
+                    gets(redSkin);
+                    break;  
+            case 11: printf("DOES THE PATIENT HAVE DIALATED PUPILS, YES OR NO? "); 
+                    gets(dialatedPupils);
+                    break;  
+            case 12: printf("DOES THE PATIENT HAVE SLOW BREATHING, YES OR NO? "); 
+                	gets(slowBreathing);
+                    break;   
+            case 13: printf("DOES THE PATIENT HAVE DROWSINESS, YES OR NO? "); 
+                    gets(drowsiness);
+                    break;   
+            case 14: printf("DOES THE PATIENT HAVE CONFUSION, YES OR NO? "); 
+                    gets(confusion);
+                    break;   
+            case 15: printf("DOES THE PATIENT HAVE DIARRHEA, YES OR NO? "); 
+                    gets(diarrhea);
+                    break;   
+            case 16: printf("DOES THE PATIENT HAVE METALLIC TASTE IN MOUTH, YES OR NO? "); 
+                    gets(metallicTasteInMouth);
+                    break;   
+            case 17: printf("DOES THE PATIENT HAVE EXCESSIVE SALIVA, YES OR NO? "); 
+                    gets(excessiveSaliva);
+                    break;   
+            case 18: printf("DOES THE PATIENT HAVE PROBLEMS SWALLOWING, YES OR NO? "); 
+                    gets(problemsSwallowing);
+                    break;   
+            case 19: printf("DOES THE PATIENT HAVE BLOOD IN URINE, YES OR NO? "); 
+                    gets(bloodInUrine);
+                    break;   
+            case 20: printf("DOES THE PATIENT HAVE MUSCLE CRAMPS, YES OR NO? "); 
+                	gets(muscleCramps);
+                    break;   
+            case 21: printf("DOES THE PATIENT HAVE HAIR LOSS, YES OR NO? "); 
+                    gets(hairLoss);
+                    break;   
+            case 22: printf("DOES THE PATIENT HAVE CONVULSIONS, YES OR NO? "); 
+                    gets(convulsions);
+                    break;   
+            case 23: printf("DOES THE PATIENT HAVE SWEATING, YES OR NO? "); 
+                    gets(sweating);
+                    break;   
+            case 24: printf("DOES THE PATIENT HAVE CONSTIPATION, YES OR NO? "); 
+                    gets(constipation);
+                    break;   
+            case 25: printf("DOES THE PATIENT HAVE SLEEP PROBLEMS, YES OR NO? "); 
+                    gets(sleepProblems);
+                    break;   
+            case 26: printf("DOES THE PATIENT HAVE LOSS OF APPITITE, YES OR NO? "); 
+                    gets(lossOfAppitite);
+                    break;   
+            case 27: printf("DOES THE PATIENT HAVE FATIGUE, YES OR NO? "); 
+                    gets(fatigue);
+                    break;   
+            case 28: printf("DOES THE PATIENT HAVE HIGH BLOOD PRESSURE, YES OR NO? "); 
+                    gets(highBloodPressure);
+                    break;   
+            case 29: printf("DOES THE PATIENT HAVE NUMBING EXTREMITIES, YES OR NO? "); 
+                    gets(numbingExtremities);
+                    break;   
+            case 30: printf("DOES THE PATIENT HAVE MEMORY LOSS, YES OR NO? "); 
+                    gets(memoryLoss);
+                    break;   
+            case 31: printf("DOES THE PATIENT HAVE ANEMIA, YES OR NO? "); 
+                    gets(anemia);
+                    break;   
+            case 32: printf("DOES THE PATIENT HAVE KIDNEY DISFUNCTION, YES OR NO? "); 
+                    gets(kidneyDisfunction);
+                    break;   
+            case 33: printf("DOES THE PATIENT HAVE ANXIETY, YES OR NO? "); 
+                    gets(anxiety);
+                    break;   
+            case 34: printf("DOES THE PATIENT HAVE DEPRESSION, YES OR NO? "); 
+                    gets(depression);
+                    break;   
+            case 35: printf("DOES THE PATIENT HAVE SHYNESS, YES OR NO? "); 
+                    gets(shyness);
+                    break;   
+            case 36: printf("DOES THE PATIENT HAVE LACK OF COORDINATION, YES OR NO? "); 
+                    gets(lackOfCoordination);
+                    break;   
+            case 37: printf("DOES THE PATIENT HAVE TROUBLE WALKING, YES OR NO? "); 
+                    gets(troubleWalking);
+                    break;   
+            case 38: printf("DOES THE PATIENT HAVE VISION CHANGES, YES OR NO? "); 
+                    gets(visionChanges);
+                    break;   
+            case 39: printf("DOES THE PATIENT HAVE BURNING IN MOUTH, YES OR NO? "); 
+                    gets(burningInMouth);
+                    break;   
+            case 40: printf("DOES THE PATIENT HAVE SWELLING OF THROAT, YES OR NO? "); 
+                    gets(swellingOfThroat);
+                    break;   
+            case 41: printf("DOES THE PATIENT HAVE THROAT PAIN, YES OR NO? "); 
+                    gets(throatPain);
+                    break;   
+            case 42: printf("DOES THE PATIENT HAVE BLOOD IN STOOL, YES OR NO? "); 
+                    gets(bloodInStool);
+                    break;   
+            case 43: printf("DOES THE PATIENT HAVE PH CHANGES, YES OR NO? "); 
+                    gets(pHChanges);
+                    break;   
+            case 44: printf("DOES THE PATIENT HAVE RESPIRATORY DISTRESS, YES OR NO? "); 
+                    gets(respiratoryDistress);
+                    break;   
+            case 45: printf("DOES THE PATIENT HAVE FEVER, YES OR NO? "); 
+                    gets(fever);
+                    break;   
+            case 46: printf("DOES THE PATIENT HAVE COUGH, YES OR NO? "); 
+                    gets(cough);
+                    break;   
+            case 47: printf("DOES THE PATIENT HAVE NAUSEA, YES OR NO? "); 
+                    gets(nausea);
+                    break;   
+            case 48: printf("DOES THE PATIENT HAVE FLUID IN LUNGS, YES OR NO? "); 
+                    gets(fluidInLungs);
+                    break;   
+            case 49: printf("DOES THE PATIENT HAVE LOW BLOOD PRESSURE, YES OR NO? "); 
+                    gets(lowBloodPressure);
+                    break;   
+            case 50: printf("DOES THE PATIENT HAVE INEBRIATION, YES OR NO? "); 
+                    gets(inebriation);
+                    break;   
+            case 51: printf("DOES THE PATIENT HAVE GASTRITIS, YES OR NO? "); 
+                    gets(gastritis);
+                    break;   
+            case 52: printf("DOES THE PATIENT HAVE METABOLIC ACIDOSIS, YES OR NO? "); 
+                    gets(metabolicAcidosis);
+                    break;   
+            case 53: printf("DOES THE PATIENT HAVE DROOPING EYELIDS, YES OR NO? "); 
+                    gets(droopingEyelids);
+                    break;   
+            case 54: printf("DOES THE PATIENT HAVE SLURRED SPEECH, YES OR NO? "); 
+                    gets(slurredSpeech);
+                    break;   
+            case 55: printf("DOES THE PATIENT HAVE DRY MOUTH, YES OR NO? "); 
+                    gets(dryMouth);
+                    break;   
+            case 56: printf("DOES THE PATIENT HAVE AGITATION, YES OR NO? "); 
+                    gets(agitation);
+                    break;   
+            case 57: printf("DOES THE PATIENT HAVE RESTLESSNESS, YES OR NO? "); 
+                    gets(restlessness);
+                    break;   
+            case 58: printf("DOES THE PATIENT HAVE JAW TIGHTNESS, YES OR NO? "); 
+                    gets(jawTightness);
+                    break;
+                        /***** comment 1715 ****/ 
+            } 
+                /* end of inputs statements for sample position knowledge 
+                   base */ 
+        } 
+	} 	
+}
+
+void identifyPoison(){
+	/**** if then statements ****/ 
+    /* sample if parts of if then statements from 
+        the position knowledge base */
+    switch(sn){
+    /* if part of statement 1, Cyanide */ 
+    /****** comment 1500 ****/
+    case 1: if((strcmp(vomiting, "YES") == 0)
+			&& (strcmp(headache, "YES") == 0)
+			&& (strcmp(vertigo, "YES") == 0)
+			&& (strcmp(abdominalPain, "YES") == 0)
+			&& (strcmp(changeInTaste, "YES") == 0)
+			&& (strcmp(chestPain, "YES") == 0)
+			&& (strcmp(redSkin, "YES") == 0)
+			&& (strcmp(dialatedPupils, "YES") == 0)
+			&& (strcmp(slowBreathing, "YES") == 0)) s = 1; 
+            break; 
+    /* if part of statement 2, Mercury */ 
+    /***** comment 1510 ******/ 
+    case 2: if((strcmp(vomiting, "NO") == 0)
+			&& (strcmp(hearingSpeechDifficulty, "YES") == 0)
+			&& (strcmp(muscleWeakness, "YES") == 0)
+			&& (strcmp(irritation, "YES") == 0)
+			&& (strcmp(numbingExtremities, "YES") == 0)
+			&& (strcmp(memoryLoss, "YES") == 0)
+			&& (strcmp(anxiety, "YES") == 0)
+			&& (strcmp(depression, "YES") == 0)
+			&& (strcmp(shyness, "YES") == 0)
+			&& (strcmp(lackOfCoordination, "YES") == 0)
+			&& (strcmp(troubleWalking, "YES") == 0)
+			&& (strcmp(visionChanges, "YES") == 0)) s = 1; 
+            break; 
+    /* if part of statement 3, Thallium */ 
+    case 3: if((strcmp(vomiting, "YES") == 0)
+			&& (strcmp(headache, "NO") == 0)
+			&& (strcmp(abdominalPain, "YES") == 0)
+			&& (strcmp(diarrhea, "YES") == 0)
+			&& (strcmp(hairLoss, "YES") == 0)
+			&& (strcmp(numbingExtremities, "YES") == 0)
+			&& (strcmp(nausea, "YES") == 0)) s = 1; 
+            break; 
+    /* if part of statement 4, Lead */ 
+    /******** comment 1560 ******/ 
+    case 4: if((strcmp(vomiting, "NO") == 0)
+			&& (strcmp(hearingSpeechDifficulty, "NO") == 0)
+			&& (strcmp(headache, "YES") == 0)
+			&& (strcmp(drowsiness, "YES") == 0)
+			&& (strcmp(irritation, "YES") == 0)
+			&& (strcmp(constipation, "YES") == 0)
+			&& (strcmp(sleepProblems, "YES") == 0)
+			&& (strcmp(lossOfAppitite, "YES") == 0)
+			&& (strcmp(fatigue, "YES") == 0)
+			&& (strcmp(highBloodPressure, "YES") == 0)
+			&& (strcmp(numbingExtremities, "YES") == 0)
+			&& (strcmp(memoryLoss, "YES") == 0)
+			//&& (strcmp(anemia, "YES") == 0)
+			&& (strcmp(kidneyDisfunction, "YES") == 0)) s = 1; 
+            break; 
+    /******** comment 1570 ********/ 
+    /* if part of statement 5, Arsenic */ 
+    case 5: if((strcmp(vomiting, "YES") == 0)
+			&& (strcmp(headache, "YES") == 0)
+			&& (strcmp(vertigo, "NO") == 0)
+			&& (strcmp(drowsiness, "YES") == 0)
+			&& (strcmp(confusion, "YES") == 0)
+			&& (strcmp(diarrhea, "YES") == 0)
+			&& (strcmp(metallicTasteInMouth, "YES") == 0)
+			&& (strcmp(excessiveSaliva, "YES") == 0)
+			&& (strcmp(problemsSwallowing, "YES") == 0)
+			&& (strcmp(bloodInUrine, "YES") == 0)
+			&& (strcmp(muscleCramps, "YES") == 0)
+			&& (strcmp(hairLoss, "YES") == 0)
+			&& (strcmp(convulsions, "YES") == 0)
+			&& (strcmp(sweating, "YES") == 0))s = 1; 
+            break; 
+    /* if part of statement 6, Chlorine */ 
+    case 6: if((strcmp(vomiting, "YES") == 0)
+			&& (strcmp(headache, "NO") == 0)
+			&& (strcmp(abdominalPain, "NO") == 0)
+			&& (strcmp(burningInMouth, "YES") == 0)
+			&& (strcmp(swellingOfThroat, "YES") == 0)
+			&& (strcmp(throatPain, "YES") == 0)
+			&& (strcmp(bloodInStool, "YES") == 0)
+			&& (strcmp(pHChanges, "YES") == 0)) s = 1; 
+			break;
+	/* if part of statement 7, Methanol */
+	case 7: if((strcmp(vomiting, "NO") == 0)
+			&& (strcmp(hearingSpeechDifficulty, "YES") == 0)
+			&& (strcmp(muscleWeakness, "NO") == 0)
+			&& (strcmp(convulsions, "YES") == 0)
+			&& (strcmp(visionChanges, "YES") == 0)
+			&& (strcmp(inebriation, "YES") == 0)
+			&& (strcmp(gastritis, "YES") == 0)
+			&& (strcmp(metabolicAcidosis, "YES") == 0)) s = 1;
+			break;
+	/* if part of statement 8, Strychinine */
+	case 8: if((strcmp(vomiting, "NO") == 0)
+			&& (strcmp(hearingSpeechDifficulty, "NO") == 0)
+			&& (strcmp(headache, "NO") == 0)
+			&& (strcmp(muscleWeakness, "YES") == 0)
+			&& (strcmp(slowBreathing, "YES") == 0)
+			&& (strcmp(bloodInUrine, "YES") == 0)
+			&& (strcmp(muscleCramps, "YES") == 0)
+			&& (strcmp(convulsions, "YES") == 0)
+			&& (strcmp(numbingExtremities, "YES") == 0)
+			&& (strcmp(agitation, "YES") == 0)
+			&& (strcmp(restlessness, "YES") == 0)
+			&& (strcmp(jawTightness, "YES") == 0)) s = 1;
+			break;
+	/* if part of statement 9, Carbon Monoxide */
+	case 9: if((strcmp(vomiting, "YES") == 0)
+			&& (strcmp(headache, "YES") == 0)
+			&& (strcmp(vertigo, "YES") == 0)
+			&& (strcmp(abdominalPain, "NO") == 0)
+			&& (strcmp(slowBreathing, "YES") == 0)
+			&& (strcmp(confusion, "YES") == 0)
+			&& (strcmp(fatigue, "YES") == 0)) s = 1;
+			break;
+	/* if part of statement 10, Bo Tulinus */
+	case 10: if((strcmp(vomiting, "NO") == 0)
+			&& (strcmp(hearingSpeechDifficulty, "YES") == 0)
+			&& (strcmp(muscleWeakness, "YES") == 0)
+			&& (strcmp(irritation, "NO") == 0)
+			&& (strcmp(problemsSwallowing, "YES") == 0)
+			&& (strcmp(visionChanges, "YES") == 0)
+			&& (strcmp(droopingEyelids, "YES") == 0)
+			&& (strcmp(slurredSpeech, "YES") == 0)
+			&& (strcmp(dryMouth, "YES") == 0)) s = 1;
+			break;
+	/* if part of statement 11, Ricin */
+	case 11: if((strcmp(vomiting, "NO") == 0)
+			&& (strcmp(hearingSpeechDifficulty, "NO") == 0)
+			&& (strcmp(headache, "NO") == 0)
+			&& (strcmp(muscleWeakness, "NO") == 0)
+			&& (strcmp(chestPain, "YES") == 0)
+			&& (strcmp(respiratoryDistress, "YES") == 0)
+			&& (strcmp(fever, "YES") == 0)
+			&& (strcmp(cough, "YES") == 0)
+			&& (strcmp(nausea, "YES") == 0)
+			&& (strcmp(sweating, "YES") == 0)
+			&& (strcmp(fluidInLungs, "YES") == 0)
+			&& (strcmp(lowBloodPressure, "YES") == 0)) s = 1;
+        	break;
+	}
+}
+
+void treatment(){
+
+	switch (sn){
+    /* then part of statement 1 */ 
+    /******* comment 1500 *******/ 
+    case 1: strcpy(poison, "CYANIDE"); 
+            printf("POISON = CYANIDE\n");
+			printf("TREATMENT = ACTIVATED CHARCOAL IF INGESTED, ELSE \n");
+			printf("OXYGEN MASK, CYANIDE ANTIDOTE KIT, HYDROXOCOBALAMIN\n"); 
+            break; 
+    /* then part of statement 2 */ 
+    /****** comment 1510 ******/ 
+    case 2: strcpy(poison, "MERCURY"); 
+            printf("POISON = MERCURY\n"); 
+			printf("TREATMENT = STOP EXPOSURE TO METAL, CHALATION THERAPY\n");
+            break;
+					 
+    /* then part of statement 3 */ 
+    case 3: strcpy(poison, "THALLIUM"); 
+            printf("POISON = THALLIUM\n"); 
+            printf("TREATMENT = PROVIDE OXYGEN, REMOVE CONTAMINATED \n");
+            printf("CLOTHING, INDUCE VOMITTING, ACTIVATED CHARCOAL, \n");
+            printf("WASH EXPOSED SKIN, PRUSSIAN BLUE, MEASURE BLOOD/\n");
+            printf("URINE THALLIUM CONCENTRATION EVERY OTHER DAY\n");
+            break;
+    /* then part of statement 4 */ 
+    /******** comment 1560 ******/ 
+    case 4: strcpy(poison, "LEAD"); 
+            printf("POISON = LEAD\n"); 
+            printf("TREATMENT = LOCATE AND REMOVE LEAD SOURCE, CHELATION \n");
+            printf("THERAPY, ADMINISTER EDTA, ADMINISTER DMSA\n");
+            break; 
+    /* then part of statement 5 */ 
+    /****** comment 1570 *****/ 
+    case 5: strcpy(poison, "ARSENIC"); 
+            printf("POISON = ARSENIC\n"); 
+            printf("TREATMENT = REMOVE CONTAMINATED CLOTHES, WASH/RINSE \n");
+            printf("SKIN, BLOOD TRANSFUSION, OBSERVE KIDNEY FUNCTION, \n");
+            printf("MINERAL SUPPLEMENTS\n");
+            break;
+    /* then part of statement 6 */ 
+    case 6: strcpy(poison, "CHLORINE"); 
+            printf("POISON = CHLORINE\n"); 
+            printf("TREATMENT = ACTIVATED CHARCOAL, SUPPORTIVE MEDICATIONS, \n");
+            printf("IV FLUIDS, SUPPLEMENTAL OXYGEN, BREATING TUBE, \n");
+            printf("NASOGASTRIC TUBE\n");
+            break;
+    /* then part of statement 7 */ 
+    case 7: strcpy(poison, "METHANOL"); 
+            printf("POISON = METHANOL\n"); 
+            printf("TREATMENT = FOMEPIZOLE, ETHANOL, BICARBONATE IV \n");
+            printf("FLUID, HEMODIALYSIS\n");
+            break;
+    /* then part of statement 8 */ 
+    case 8: strcpy(poison, "STRYCHININE"); 
+            printf("POISON = STRYCHININE\n"); 
+            printf("TREATMENT = REMOVING DRUG FROM BODY, IV FLUIDS, ");
+            printf("MEDICATIONS FOR SPASMS, MEDICATIONS FOR CONVULSIONS, \n");
+            printf("COOLING MEASURES FOR HIGH TEMPS\n");
+            break;
+    /* then part of statement 9 */ 
+    case 9: strcpy(poison, "CARBON MONOXIDE"); 
+            printf("POISON = CARBON MONOXIDE\n"); 
+            printf("TREATMENT = OXYGEN MASK, OXYGEN CHAMBER\n");
+            break;
+    /* then part of statement 10 */ 
+    case 10: strcpy(poison, "BO TULINUS"); 
+            printf("POISON = BO TULINUS\n");
+			printf("TREATMENT = ENDUCE VOMITTING/AENIMA, TRIVALENT \n");
+			printf("ANTITOXIN, HEPTAVALENT ANTITOXIN, HBAT\n"); 
+            break;	
+    /* then part of statement 11 */ 
+    case 11: strcpy(poison, "RICIN"); 
+            printf("POISON = RICIN\n");
+			printf("TREATMENT = ASSIST BREATING, IV FLUIDS, MEDICATIONS \n");
+			printf("TO TREAT SEIZURES, MEDICATIONS FOR LOW BLOOD PRESSURE\n"); 
+            break;
+    /****** comment 1680 ********/
+    }
+}
